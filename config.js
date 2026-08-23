@@ -19,7 +19,7 @@ window.SIGNATURE_CONFIG = {
     {
       id: "geethan",
       name: "Geethan Nava",
-      title: "Co-Founder",
+      title: "Co-Founder / Partnerships",
       email: "geethan@42hz.ai",
       meetingUrl: ""
     }

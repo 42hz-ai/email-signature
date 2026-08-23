@@ -53,6 +53,3 @@ git config --global alias.d "difftool"
 # Show diff in commit message editor
 git config --global commit.verbose true
 git config --global commit.status true
-
-# Configure Git to use SSH instead of HTTPS
-git config --global url."git@github.com:".insteadOf "https://github.com/"
