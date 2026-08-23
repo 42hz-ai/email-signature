@@ -4,13 +4,13 @@ A small static page Tim and Geethan can open, pick a name and layout, then copy 
 
 The copied HTML is email-safe: tables, inline styles, Helvetica/Arial, and a hosted logo. Email clients do not run the page’s JavaScript — once pasted, the signature is just that HTML.
 
-This will **not** work on GitHub’s file preview. Host it with **GitHub Pages** (repo root) so the URL is something like:
+**Live:** [https://42hz-ai.github.io/email-signature/](https://42hz-ai.github.io/email-signature/?person=geethan)
 
-`https://<you>.github.io/email-signature/?person=geethan`
+Hosted on GitHub Pages from the repo root. GitHub’s file preview will not run it.
 
 ## How to use it
 
-1. Open the Pages URL (or `signature.html` locally).
+1. Open [the live page](https://42hz-ai.github.io/email-signature/) (or `signature.html` locally).
 2. Click **Tim** or **Geethan**.
 3. Pick **Split**, **Stacked**, or **Compact**.
 4. Change any field if you need to (meeting link, logo URL, title).
