@@ -1,0 +1,28 @@
+{
+  "name": "42hz email signature",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest",
+      "installDirectlyFromGitHubRelease": "true"
+    }
+  },
+  "forwardPorts": [8765],
+  "portsAttributes": {
+    "8765": {
+      "label": "Signature preview",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "chmod +x .devcontainer/post-create.sh .devcontainer/configure_git.sh && .devcontainer/post-create.sh",
+  "postStartCommand": "pgrep -f 'python3 -m http.server 8765' > /dev/null || python3 -m http.server 8765 > /tmp/preview.log 2>&1 &",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.watcherExclude": {
+          "**/.git/objects/**": true
+        }
+      }
+    }
+  }
+}

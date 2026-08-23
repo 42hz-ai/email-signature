@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Email signature</title>
+  <style>
+    html, body {
+      margin: 0;
+      background: #e8eaed;
+      color: #0b0f14;
+      color-scheme: light;
+      font-family: Helvetica, Arial, sans-serif;
+    }
+    .chrome {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 28px 24px 0;
+    }
+    .chrome h1 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+    .chrome p {
+      margin: 0 0 16px;
+      font-size: 13px;
+      color: #5a6472;
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .row-label {
+      width: 54px;
+      font-size: 11px;
+      color: #5a6472;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    #people {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .row button {
+      appearance: none;
+      border: 1px solid #c7ccd1;
+      background: #fff;
+      color: #0b0f14;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font: 13px/1 Helvetica, Arial, sans-serif;
+      cursor: pointer;
+    }
+    .row button[aria-pressed="true"] {
+      border-color: #eeb94a;
+      background: #fff8e8;
+    }
+    .copy {
+      margin-left: auto;
+      border-color: #0b0f14 !important;
+      background: #0b0f14 !important;
+      color: #fff !important;
+    }
+    .copy.is-copied {
+      background: #2f6f3e !important;
+      border-color: #2f6f3e !important;
+    }
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 12px;
+      margin-top: 12px;
+      padding: 14px;
+      background: #fff;
+      border-radius: 8px;
+    }
+    .settings label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+      color: #5a6472;
+    }
+    .settings input {
+      border: 1px solid #c7ccd1;
+      border-radius: 5px;
+      padding: 7px 8px;
+      font: 13px Helvetica, Arial, sans-serif;
+      color: #0b0f14;
+    }
+    .settings .wide { grid-column: 1 / -1; }
+    .paper {
+      max-width: 720px;
+      margin: 16px auto 0;
+      background: #fff;
+      min-height: 280px;
+      padding: 40px;
+      box-sizing: border-box;
+    }
+    .source-wrap {
+      padding-top: 16px;
+      padding-bottom: 48px;
+    }
+    .source-wrap label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: #5a6472;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    #html-source {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 140px;
+      border: 1px solid #c7ccd1;
+      border-radius: 8px;
+      padding: 12px;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #0b0f14;
+      background: #fff;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="chrome">
+    <h1>Email signature</h1>
+    <p>Pick a person and layout, then copy the HTML into your email client's signature or HTML editor. Edit the fields to override name, logo, or meeting link. Only the white card is the signature.</p>
+    <div class="row">
+      <span class="row-label">Person</span>
+      <div id="people"></div>
+      <button type="button" class="copy" id="copy">Copy HTML</button>
+    </div>
+    <div class="row">
+      <span class="row-label">Layout</span>
+      <button type="button" data-layout="split" aria-pressed="true">Split</button>
+      <button type="button" data-layout="stacked" aria-pressed="false">Stacked</button>
+      <button type="button" data-layout="compact" aria-pressed="false">Compact</button>
+    </div>
+    <div class="settings">
+      <label>Name <input id="name" autocomplete="name"></label>
+      <label>Title <input id="title"></label>
+      <label>Email <input id="email" type="email" autocomplete="email"></label>
+      <label>Website label <input id="websiteLabel"></label>
+      <label class="wide">Website URL <input id="websiteUrl" type="url"></label>
+      <label class="wide">Logo URL <input id="logoUrl" type="url"></label>
+      <label>Logo width <input id="logoWidth" type="number" min="1"></label>
+      <label>Logo height <input id="logoHeight" type="number" min="1"></label>
+      <label class="wide">Meeting URL <input id="meetingUrl" type="url" placeholder="Leave blank to hide the meeting link"></label>
+    </div>
+  </div>
+
+  <div class="paper">
+    <div id="preview"></div>
+  </div>
+  <div class="chrome source-wrap">
+    <label for="html-source">HTML</label>
+    <textarea id="html-source" readonly rows="8" spellcheck="false"></textarea>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    var FIELDS = ["name", "title", "email", "websiteUrl", "websiteLabel", "logoUrl", "logoWidth", "logoHeight", "meetingUrl"];
+    var config = window.SIGNATURE_CONFIG;
+    var people = config.people;
+    var state = { personId: people[0].id, layout: "split" };
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+        return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char];
+      });
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#96;");
+    }
+
+    function readSettings() {
+      var settings = {};
+      FIELDS.forEach(function (field) {
+        settings[field] = document.getElementById(field).value.trim();
+      });
+      settings.logoWidth = Number(settings.logoWidth) || config.defaults.logoWidth;
+      settings.logoHeight = Number(settings.logoHeight) || config.defaults.logoHeight;
+      return settings;
+    }
+
+    function writeSettings(settings) {
+      FIELDS.forEach(function (field) {
+        document.getElementById(field).value = settings[field] == null ? "" : settings[field];
+      });
+    }
+
+    function personById(id) {
+      return people.filter(function (person) { return person.id === id; })[0] || people[0];
+    }
+
+    function settingsFor(personId) {
+      var person = personById(personId);
+      var settings = {};
+      FIELDS.forEach(function (field) {
+        settings[field] = person[field] != null ? person[field] : config.defaults[field];
+      });
+      return settings;
+    }
+
+    function meetingRow(settings, style) {
+      if (!settings.meetingUrl) return "";
+      return '<tr><td style="' + style + '">' +
+        '<a href="' + escapeAttr(settings.meetingUrl) + '" style="COLOR">' +
+        "Schedule a meeting</a></td></tr>";
+    }
+
+    function logo(settings, width, height) {
+      return '<a href="' + escapeAttr(settings.websiteUrl) + '" style="text-decoration:none;">' +
+        '<img src="' + escapeAttr(settings.logoUrl) + '" width="' + width + '" height="' + height +
+        '" alt="" border="0" style="display:block;border:0;" /></a>';
+    }
+
+    function contact(settings, separator) {
+      return '<a href="mailto:' + escapeAttr(settings.email) + '" style="color:#0b0f14;text-decoration:none;">' +
+        escapeHtml(settings.email) + "</a>" +
+        '<span style="color:#c7ccd1;padding:0 7px;">' + separator + "</span>" +
+        '<a href="' + escapeAttr(settings.websiteUrl) + '" style="color:#eeb94a;text-decoration:none;font-weight:bold;">' +
+        escapeHtml(settings.websiteLabel) + "</a>";
+    }
+
+    function renderSplit(settings) {
+      var meeting = meetingRow(settings, "font-size:12px;line-height:20px;padding-top:8px;").replace(
+        "COLOR",
+        "color:#0b0f14;text-decoration:none;border:1px solid #eeb94a;border-radius:4px;padding:4px 10px;display:inline-block;"
+      );
+      return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
+        "<tr>" +
+        '<td style="padding:0 18px 0 0;border-right:2px solid #eeb94a;vertical-align:middle;">' +
+        logo(settings, settings.logoWidth, settings.logoHeight) + "</td>" +
+        '<td style="padding:0 0 0 18px;vertical-align:middle;">' +
+        '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
+        '<tr><td style="font-size:15px;font-weight:bold;color:#0b0f14;line-height:20px;">' + escapeHtml(settings.name) + "</td></tr>" +
+        '<tr><td style="font-size:13px;color:#5a6472;line-height:18px;padding-top:1px;">' + escapeHtml(settings.title) + "</td></tr>" +
+        '<tr><td style="font-size:12px;line-height:20px;padding-top:8px;">' + contact(settings, "|") + "</td></tr>" +
+        meeting +
+        "</table></td></tr></table>";
+    }
+
+    function renderStacked(settings) {
+      var meeting = meetingRow(settings, "padding-top:8px;font-size:12px;line-height:20px;font-family:Helvetica,Arial,sans-serif;").replace(
+        "COLOR",
+        "color:#eeb94a;text-decoration:none;font-weight:bold;"
+      );
+      return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
+        '<tr><td style="padding:0 0 10px 0;border-bottom:2px solid #eeb94a;">' +
+        logo(settings, settings.logoWidth, settings.logoHeight) + "</td></tr>" +
+        '<tr><td style="padding:14px 0 0 0;font-size:16px;font-weight:bold;color:#0b0f14;line-height:22px;font-family:Helvetica,Arial,sans-serif;">' +
+        escapeHtml(settings.name) + "</td></tr>" +
+        '<tr><td style="padding-top:2px;font-size:13px;color:#5a6472;line-height:18px;font-family:Helvetica,Arial,sans-serif;">' +
+        escapeHtml(settings.title) + "</td></tr>" +
+        '<tr><td style="padding-top:10px;font-size:12px;line-height:20px;font-family:Helvetica,Arial,sans-serif;">' +
+        contact(settings, "·") + "</td></tr>" +
+        meeting +
+        "</table>";
+    }
+
+    function renderCompact(settings) {
+      var width = Math.round(settings.logoWidth * 100 / 120);
+      var height = Math.round(settings.logoHeight * 100 / 120);
+      var meeting = meetingRow(settings, "padding-top:6px;font-size:12px;line-height:16px;").replace(
+        "COLOR",
+        "color:#0b0f14;text-decoration:none;"
+      );
+      return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
+        "<tr>" +
+        '<td style="padding:0 16px 0 0;vertical-align:middle;">' + logo(settings, width, height) + "</td>" +
+        '<td style="vertical-align:middle;">' +
+        '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
+        '<tr><td style="font-size:15px;font-weight:bold;color:#0b0f14;line-height:20px;padding:0 0 6px 0;border-bottom:2px solid #eeb94a;">' +
+        escapeHtml(settings.name) + "</td></tr>" +
+        '<tr><td style="padding-top:7px;font-size:12px;color:#5a6472;line-height:16px;">' + escapeHtml(settings.title) + "</td></tr>" +
+        '<tr><td style="padding-top:3px;font-size:12px;line-height:18px;">' + contact(settings, "|") + "</td></tr>" +
+        meeting +
+        "</table></td></tr></table>";
+    }
+
+    var layouts = { split: renderSplit, stacked: renderStacked, compact: renderCompact };
+    var lastHtml = "";
+
+    function render() {
+      lastHtml = layouts[state.layout](readSettings());
+      document.getElementById("preview").innerHTML = lastHtml;
+      document.getElementById("html-source").value = lastHtml;
+      document.querySelectorAll("[data-layout]").forEach(function (button) {
+        button.setAttribute("aria-pressed", button.getAttribute("data-layout") === state.layout ? "true" : "false");
+      });
+      document.querySelectorAll("[data-person]").forEach(function (button) {
+        button.setAttribute("aria-pressed", button.getAttribute("data-person") === state.personId ? "true" : "false");
+      });
+    }
+
+    function persist(resetOverrides) {
+      try {
+        localStorage.setItem("signature-person", state.personId);
+        localStorage.setItem("signature-layout", state.layout);
+      } catch (error) {}
+      if (history.replaceState) {
+        var params = resetOverrides ? new URLSearchParams() : new URLSearchParams(location.search);
+        params.set("person", state.personId);
+        params.set("layout", state.layout);
+        history.replaceState(null, "", "?" + params.toString());
+      }
+    }
+
+    function applyQuery(settings) {
+      var params = new URLSearchParams(location.search);
+      FIELDS.forEach(function (field) {
+        if (params.has(field)) settings[field] = params.get(field);
+      });
+      if (params.has("logo")) settings.logoUrl = params.get("logo");
+      if (params.has("meeting")) settings.meetingUrl = params.get("meeting");
+      return settings;
+    }
+
+    function selectPerson(personId) {
+      state.personId = personById(personId).id;
+      writeSettings(settingsFor(state.personId));
+      persist(true);
+      render();
+    }
+
+    function selectLayout(layout) {
+      if (!layouts[layout]) return;
+      state.layout = layout;
+      persist();
+      render();
+    }
+
+    people.forEach(function (person) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("data-person", person.id);
+      button.textContent = person.name.split(" ")[0];
+      button.addEventListener("click", function () { selectPerson(person.id); });
+      document.getElementById("people").appendChild(button);
+    });
+
+    document.querySelectorAll("[data-layout]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        selectLayout(button.getAttribute("data-layout"));
+      });
+    });
+
+    FIELDS.forEach(function (field) {
+      document.getElementById(field).addEventListener("input", render);
+    });
+
+    function markCopied(ok) {
+      var button = document.getElementById("copy");
+      if (ok) {
+        button.textContent = "Copied HTML · " + personById(state.personId).name.split(" ")[0];
+        button.classList.add("is-copied");
+        setTimeout(function () {
+          button.textContent = "Copy HTML";
+          button.classList.remove("is-copied");
+        }, 1600);
+        return;
+      }
+      button.textContent = "Copy blocked — select the HTML below";
+      document.getElementById("html-source").focus();
+      document.getElementById("html-source").select();
+      setTimeout(function () {
+        button.textContent = "Copy HTML";
+      }, 2200);
+    }
+
+    function copyHtmlSource(html) {
+      var textarea = document.createElement("textarea");
+      textarea.value = html;
+      textarea.setAttribute("readonly", "");
+      textarea.style.cssText = "position:fixed;left:-9999px;top:0;";
+      document.body.appendChild(textarea);
+      textarea.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (error) {}
+      document.body.removeChild(textarea);
+      return ok;
+    }
+
+    function signatureHtml() {
+      return lastHtml;
+    }
+
+    document.getElementById("copy").addEventListener("click", function () {
+      var html = signatureHtml();
+      var fallback = function () { markCopied(copyHtmlSource(html)); };
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([html], { type: "text/plain" })
+          })
+        ]).then(function () {
+          markCopied(true);
+        }).catch(function () {
+          if (navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(html).then(function () {
+              markCopied(true);
+            }).catch(fallback);
+            return;
+          }
+          fallback();
+        });
+        return;
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(html).then(function () {
+          markCopied(true);
+        }).catch(fallback);
+        return;
+      }
+
+      fallback();
+    });
+
+    var params = new URLSearchParams(location.search);
+    var storedPerson = "";
+    var storedLayout = "";
+    try {
+      storedPerson = localStorage.getItem("signature-person") || "";
+      storedLayout = localStorage.getItem("signature-layout") || "";
+    } catch (error) {}
+
+    state.personId = personById(params.get("person") || storedPerson || people[0].id).id;
+    state.layout = layouts[params.get("layout") || storedLayout] ? (params.get("layout") || storedLayout) : "split";
+    writeSettings(applyQuery(settingsFor(state.personId)));
+    persist();
+    render();
+  </script>
+</body>
+</html>
