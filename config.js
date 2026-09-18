@@ -4,7 +4,7 @@ window.SIGNATURE_CONFIG = {
   defaults: {
     websiteUrl: "https://42hz.ai",
     websiteLabel: "42hz.ai",
-    logoUrl: "https://42hz.ai/assets/logo-42hz.png",
+    logoUrl: "https://42hz-ai.github.io/email-signature/assets/logo-42hz-email.png",
     logoWidth: 120,
     logoHeight: 40
   },
