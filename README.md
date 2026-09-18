@@ -2,7 +2,7 @@
 
 A small static page Tim and Geethan can open, pick a name and layout, then copy HTML into Gmail, Apple Mail, or Outlook.
 
-The copied HTML is email-safe: tables, inline styles, Helvetica/Arial, and a hosted logo. Email clients do not run the page’s JavaScript — once pasted, the signature is just that HTML.
+The copied HTML is email-safe: tables, inline styles, Helvetica/Arial, and a hosted logo (`assets/logo-42hz-email.png` on GitHub Pages). Email clients do not run the page’s JavaScript — once pasted, the signature is just that HTML.
 
 **Live:** [https://42hz-ai.github.io/email-signature/](https://42hz-ai.github.io/email-signature/?person=geethan)
 
@@ -49,9 +49,7 @@ To run Git setup interactively (name, email, SSH remotes):
 | `index.html` | GitHub Pages entry; redirects to the tool |
 | `signature.html` | The tool (preview + copy) |
 | `config.js` | Shared defaults and people |
-| `assets/logo-42hz-email.png` | Smaller logo for email (~16KB, 240×79) |
+| `assets/logo-42hz-email.png` | Smaller logo for email (~16KB, 240×79). Default `logoUrl` is the GitHub Pages copy: `https://42hz-ai.github.io/email-signature/assets/logo-42hz-email.png` |
 | `.devcontainer/` | Python dev container, GitHub CLI, local preview |
 
-## Todo
-
-- [ ] **Geethan:** Upload `assets/logo-42hz-email.png` to the 42hz.ai site (suggested URL: `https://42hz.ai/assets/logo-42hz-email.png`) and update `logoUrl` in `config.js`. The current site logo is a 59KB 640×218 PNG; this version is cropped, retina-sized for a 120×40 display, and much smaller for inboxes that load remote images.
+The 42hz.ai site no longer serves `/assets/logo-42hz.png`. The current site wordmark is `https://42hz.ai/images/logo-42hz-blue.png` if you want that instead of the gold email mark.
