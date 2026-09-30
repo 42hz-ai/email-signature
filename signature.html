@@ -62,8 +62,8 @@
     }
     .copy {
       margin-left: auto;
-      border-color: #0b0f14 !important;
-      background: #0b0f14 !important;
+      border-color: #3b6acb !important;
+      background: #3b6acb !important;
       color: #fff !important;
     }
     .copy.is-copied {
@@ -101,6 +101,21 @@
       min-height: 280px;
       padding: 40px;
       box-sizing: border-box;
+      transition: background 0.15s ease;
+    }
+    .paper.is-dark-preview {
+      background: #202124;
+    }
+    .paper-hint {
+      max-width: 720px;
+      margin: 8px auto 0;
+      padding: 0 24px;
+      font-size: 12px;
+      color: #5a6472;
+      line-height: 1.4;
+    }
+    .paper-hint.is-dark-preview {
+      color: #9aa0a6;
     }
     .source-wrap {
       padding-top: 16px;
@@ -144,6 +159,11 @@
       <button type="button" data-layout="stacked" aria-pressed="false">Stacked</button>
       <button type="button" data-layout="compact" aria-pressed="false">Compact</button>
     </div>
+    <div class="row">
+      <span class="row-label">Preview</span>
+      <button type="button" data-preview="light" aria-pressed="true">Light</button>
+      <button type="button" data-preview="dark" aria-pressed="false">Dark</button>
+    </div>
     <div class="settings">
       <label>Name <input id="name" autocomplete="name"></label>
       <label>Title <input id="title"></label>
@@ -157,7 +177,8 @@
     </div>
   </div>
 
-  <div class="paper">
+  <p class="paper-hint" id="paper-hint">Simulates a light message background. Copied HTML includes a white card for dark-mode inboxes.</p>
+  <div class="paper" id="paper">
     <div id="preview"></div>
   </div>
   <div class="chrome source-wrap">
@@ -170,7 +191,28 @@
     var FIELDS = ["name", "title", "email", "websiteUrl", "websiteLabel", "logoUrl", "logoWidth", "logoHeight", "meetingUrl"];
     var config = window.SIGNATURE_CONFIG;
     var people = config.people;
-    var state = { personId: people[0].id, layout: "split" };
+    var brand = config.brand || {
+      blue: "#3b6acb",
+      gold: "#eeb94a",
+      ink: "#0b0f14",
+      blueSoft: "#eef3fb",
+      goldSoft: "#fff8e8",
+      muted: "#5a6472"
+    };
+    var state = { personId: people[0].id, layout: "split", preview: "light" };
+
+    var CARD_TABLE_STYLE =
+      "border-collapse:collapse;background-color:#ffffff;font-family:Helvetica,Arial,sans-serif;";
+    var CARD_CELL_STYLE = "padding:12px 14px;background-color:#ffffff;vertical-align:top;";
+
+    function wrapSignatureCard(innerHtml) {
+      return (
+        '<table cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="' + CARD_TABLE_STYLE + '">' +
+        '<tr><td bgcolor="#ffffff" style="' + CARD_CELL_STYLE + '">' +
+        innerHtml +
+        "</td></tr></table>"
+      );
+    }
 
     function escapeHtml(value) {
       return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
@@ -225,26 +267,29 @@
     }
 
     function contact(settings, separator) {
-      return '<a href="mailto:' + escapeAttr(settings.email) + '" style="color:#0b0f14;text-decoration:none;">' +
+      return '<a href="mailto:' + escapeAttr(settings.email) + '" style="color:' + brand.ink + ';text-decoration:none;">' +
         escapeHtml(settings.email) + "</a>" +
         '<span style="color:#c7ccd1;padding:0 7px;">' + separator + "</span>" +
-        '<a href="' + escapeAttr(settings.websiteUrl) + '" style="color:#eeb94a;text-decoration:none;font-weight:bold;">' +
+        '<a href="' + escapeAttr(settings.websiteUrl) + '" style="color:' + brand.gold + ';text-decoration:none;font-weight:bold;">' +
         escapeHtml(settings.websiteLabel) + "</a>";
     }
 
     function renderSplit(settings) {
       var meeting = meetingRow(settings, "font-size:12px;line-height:20px;padding-top:8px;").replace(
         "COLOR",
-        "color:#0b0f14;text-decoration:none;border:1px solid #eeb94a;border-radius:4px;padding:4px 10px;display:inline-block;"
+        "color:" + brand.blue + ";text-decoration:none;border:1px solid " + brand.gold +
+          ";border-radius:4px;padding:4px 10px;display:inline-block;font-weight:bold;"
       );
       return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
         "<tr>" +
-        '<td style="padding:0 18px 0 0;border-right:2px solid #eeb94a;vertical-align:middle;">' +
+        '<td style="padding:0 18px 0 0;border-right:2px solid ' + brand.gold + ';vertical-align:middle;">' +
         logo(settings, settings.logoWidth, settings.logoHeight) + "</td>" +
         '<td style="padding:0 0 0 18px;vertical-align:middle;">' +
         '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
-        '<tr><td style="font-size:15px;font-weight:bold;color:#0b0f14;line-height:20px;">' + escapeHtml(settings.name) + "</td></tr>" +
-        '<tr><td style="font-size:13px;color:#5a6472;line-height:18px;padding-top:1px;">' + escapeHtml(settings.title) + "</td></tr>" +
+        '<tr><td style="font-size:15px;font-weight:bold;color:' + brand.blue + ';line-height:20px;">' +
+        escapeHtml(settings.name) + "</td></tr>" +
+        '<tr><td style="font-size:13px;color:' + brand.muted + ';line-height:18px;padding-top:1px;">' +
+        escapeHtml(settings.title) + "</td></tr>" +
         '<tr><td style="font-size:12px;line-height:20px;padding-top:8px;">' + contact(settings, "|") + "</td></tr>" +
         meeting +
         "</table></td></tr></table>";
@@ -253,14 +298,16 @@
     function renderStacked(settings) {
       var meeting = meetingRow(settings, "padding-top:8px;font-size:12px;line-height:20px;font-family:Helvetica,Arial,sans-serif;").replace(
         "COLOR",
-        "color:#eeb94a;text-decoration:none;font-weight:bold;"
+        "color:" + brand.gold + ";text-decoration:none;font-weight:bold;"
       );
       return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
-        '<tr><td style="padding:0 0 10px 0;border-bottom:2px solid #eeb94a;">' +
+        '<tr><td style="padding:0 0 10px 0;border-bottom:2px solid ' + brand.gold + ';">' +
         logo(settings, settings.logoWidth, settings.logoHeight) + "</td></tr>" +
-        '<tr><td style="padding:14px 0 0 0;font-size:16px;font-weight:bold;color:#0b0f14;line-height:22px;font-family:Helvetica,Arial,sans-serif;">' +
+        '<tr><td style="padding:14px 0 0 0;font-size:16px;font-weight:bold;color:' + brand.blue +
+        ';line-height:22px;font-family:Helvetica,Arial,sans-serif;">' +
         escapeHtml(settings.name) + "</td></tr>" +
-        '<tr><td style="padding-top:2px;font-size:13px;color:#5a6472;line-height:18px;font-family:Helvetica,Arial,sans-serif;">' +
+        '<tr><td style="padding-top:2px;font-size:13px;color:' + brand.muted +
+        ';line-height:18px;font-family:Helvetica,Arial,sans-serif;">' +
         escapeHtml(settings.title) + "</td></tr>" +
         '<tr><td style="padding-top:10px;font-size:12px;line-height:20px;font-family:Helvetica,Arial,sans-serif;">' +
         contact(settings, "·") + "</td></tr>" +
@@ -273,16 +320,18 @@
       var height = Math.round(settings.logoHeight * 100 / 120);
       var meeting = meetingRow(settings, "padding-top:6px;font-size:12px;line-height:16px;").replace(
         "COLOR",
-        "color:#0b0f14;text-decoration:none;"
+        "color:" + brand.gold + ";text-decoration:none;font-weight:bold;"
       );
       return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
         "<tr>" +
         '<td style="padding:0 16px 0 0;vertical-align:middle;">' + logo(settings, width, height) + "</td>" +
         '<td style="vertical-align:middle;">' +
         '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;">' +
-        '<tr><td style="font-size:15px;font-weight:bold;color:#0b0f14;line-height:20px;padding:0 0 6px 0;border-bottom:2px solid #eeb94a;">' +
+        '<tr><td style="font-size:15px;font-weight:bold;color:' + brand.blue +
+        ';line-height:20px;padding:0 0 6px 0;border-bottom:2px solid ' + brand.gold + ';">' +
         escapeHtml(settings.name) + "</td></tr>" +
-        '<tr><td style="padding-top:7px;font-size:12px;color:#5a6472;line-height:16px;">' + escapeHtml(settings.title) + "</td></tr>" +
+        '<tr><td style="padding-top:7px;font-size:12px;color:' + brand.muted + ';line-height:16px;">' +
+        escapeHtml(settings.title) + "</td></tr>" +
         '<tr><td style="padding-top:3px;font-size:12px;line-height:18px;">' + contact(settings, "|") + "</td></tr>" +
         meeting +
         "</table></td></tr></table>";
@@ -291,10 +340,25 @@
     var layouts = { split: renderSplit, stacked: renderStacked, compact: renderCompact };
     var lastHtml = "";
 
+    function applyPreviewChrome() {
+      var dark = state.preview === "dark";
+      document.getElementById("paper").classList.toggle("is-dark-preview", dark);
+      var hint = document.getElementById("paper-hint");
+      hint.classList.toggle("is-dark-preview", dark);
+      hint.textContent = dark
+        ? "Simulates a dark inbox (Gmail/Apple Mail style). The white card in copied HTML keeps brand colors readable."
+        : "Simulates a light message background. Copied HTML includes a white card for dark-mode inboxes.";
+      document.querySelectorAll("[data-preview]").forEach(function (button) {
+        button.setAttribute("aria-pressed", button.getAttribute("data-preview") === state.preview ? "true" : "false");
+      });
+    }
+
     function render() {
-      lastHtml = layouts[state.layout](readSettings());
+      var inner = layouts[state.layout](readSettings());
+      lastHtml = wrapSignatureCard(inner);
       document.getElementById("preview").innerHTML = lastHtml;
       document.getElementById("html-source").value = lastHtml;
+      applyPreviewChrome();
       document.querySelectorAll("[data-layout]").forEach(function (button) {
         button.setAttribute("aria-pressed", button.getAttribute("data-layout") === state.layout ? "true" : "false");
       });
@@ -307,6 +371,7 @@
       try {
         localStorage.setItem("signature-person", state.personId);
         localStorage.setItem("signature-layout", state.layout);
+        localStorage.setItem("signature-preview", state.preview);
       } catch (error) {}
       if (history.replaceState) {
         var params = resetOverrides ? new URLSearchParams() : new URLSearchParams(location.search);
@@ -340,6 +405,13 @@
       render();
     }
 
+    function selectPreview(preview) {
+      if (preview !== "light" && preview !== "dark") return;
+      state.preview = preview;
+      persist();
+      applyPreviewChrome();
+    }
+
     people.forEach(function (person) {
       var button = document.createElement("button");
       button.type = "button";
@@ -352,6 +424,12 @@
     document.querySelectorAll("[data-layout]").forEach(function (button) {
       button.addEventListener("click", function () {
         selectLayout(button.getAttribute("data-layout"));
+      });
+    });
+
+    document.querySelectorAll("[data-preview]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        selectPreview(button.getAttribute("data-preview"));
       });
     });
 
@@ -432,13 +510,16 @@
     var params = new URLSearchParams(location.search);
     var storedPerson = "";
     var storedLayout = "";
+    var storedPreview = "";
     try {
       storedPerson = localStorage.getItem("signature-person") || "";
       storedLayout = localStorage.getItem("signature-layout") || "";
+      storedPreview = localStorage.getItem("signature-preview") || "";
     } catch (error) {}
 
     state.personId = personById(params.get("person") || storedPerson || people[0].id).id;
     state.layout = layouts[params.get("layout") || storedLayout] ? (params.get("layout") || storedLayout) : "split";
+    state.preview = storedPreview === "dark" ? "dark" : "light";
     writeSettings(applyQuery(settingsFor(state.personId)));
     persist();
     render();
